@@ -1,0 +1,19 @@
+import mysql.connector
+
+# Function to establish a database connection
+def connect_database():
+        conn = mysql.connector.connect(
+            host="cis3368.clw2fv8uwelh.us-east-2.rds.amazonaws.com",
+            user="admin",
+            password="kevin123qwe",
+            database="cis3368springdb"
+        )
+        return conn
+    
+# Function to fetch data from the sales table
+def fetch_sales(conn):
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute("SELECT * FROM sales")
+    rows = cursor.fetchall()
+    cursor.close()
+    print(rows)
