@@ -1,0 +1,89 @@
+import mysql.connector
+
+# Function to establish a database connection
+def connect_database():
+        conn = mysql.connector.connect(
+            host="cis3368.clw2fv8uwelh.us-east-2.rds.amazonaws.com",
+            user="admin",
+            password="kevin123qwe",
+            database="cis3368springdb"
+        )
+        return conn
+    
+# Function to fetch data from the sales table
+def fetch_sales(conn):
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute("SELECT * FROM sales")
+    rows = cursor.fetchall()
+    cursor.close()
+    print(rows)
+
+# Function to calculate individual product sales and total sales for each seller
+def calculate_sales(sales_data):
+    sales_per_seller = {}
+    total_sales_per_seller = {}
+
+    for row in sales_data:
+        seller = row["seller"]
+        quantity = row["quantity"]
+        price = row["price"]
+        sales = quantity * price
+
+        # Calculate individual product sales for each seller
+        if seller in sales_per_seller:
+            if row["product"] in sales_per_seller[seller]:
+                sales_per_seller[seller][row["product"]] += sales
+            else:
+                sales_per_seller[seller][row["product"]] = sales
+        else:
+            sales_per_seller[seller] = {row["product"]: sales}
+
+        # Calculate total sales for each seller
+        if seller in total_sales_per_seller:
+            total_sales_per_seller[seller] += sales
+        else:
+            total_sales_per_seller[seller] = sales
+
+    return sales_per_seller, total_sales_per_seller
+
+# Function to show available sellers
+def display_sellers(sales_data):
+    sellers = set(row["seller"] for row in sales_data)
+    print("Available Sellers:")
+    for seller in sellers:
+        print(seller)
+
+# Function to display sales report for a seller
+def display_sales(seller_name, sales_data):
+    print(f"Sales Report for {seller_name}:")
+    for id, product, quantity, price, total in sales_data:
+        print(f"id: {id}")
+        print(f"Product: {product}")
+        print(f"Quantity: {quantity}")
+        print(f"Price: {price:.2f}")
+        print(f"Total: {total:.2f}")
+        print()
+
+# Main function
+def main():
+    conn = connect_database()
+
+
+    sales_data = fetch_sales(conn)
+    sales_per_seller, total_sales_per_seller = calculate_sales(sales_data)
+
+    display_sellers(sales_data)
+
+    seller_name = input("Enter the seller's name: ")
+
+    if seller_name in sales_per_seller:
+        seller_sales = sales_per_seller[seller_name].values()
+        display_sales(seller_name, seller_sales)
+        print(f"Total Sales for {seller_name}: ${total_sales_per_seller[seller_name]:.2f}")
+    else:
+        print(f"No data found for {seller_name}.")
+
+    conn.close()
+
+if __name__ == "__main__":
+    main()
